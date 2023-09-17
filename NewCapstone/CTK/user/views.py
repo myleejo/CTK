@@ -17,7 +17,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 from django.contrib import messages
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import *
+from rest_framework.authentication import *
+from rest_framework.authtoken.models import Token
+
 from ranking.models import UserScore
 
 from .serializers import *
@@ -53,24 +56,40 @@ class Join(APIView):
         
 
 #session을 통해 인증
+# class Login(APIView):
+
+#     def post(self, request):
+#             email = request.data.get('email', None)
+#             password = request.data.get('password', None)
+            
+#             user = authenticate(request, username=email, password=password)
+
+#             if user is not None:
+#                 request.session['email'] = email
+#                 return Response(status=200)
+#             else:
+#                 return Response(status=400, data=dict(message="입력하신 아이디가 존재하지 않거나 패스워드가 일치하지 않습니다."))
+
+#token통한 인증
 class Login(APIView):
     def post(self, request):
-            email = request.data.get('email', None)
-            password = request.data.get('password', None)
-            
-            user = authenticate(request, username=email, password=password)
+        email = request.data.get('email', None)
+        password = request.data.get('password', None)
+        
+        user = authenticate(request, username=email, password=password)
 
-            if user is not None:
-                request.session['email'] = email
-                return Response(status=200)
-            else:
-                return Response(status=400, data=dict(message="입력하신 아이디가 존재하지 않거나 패스워드가 일치하지 않습니다."))
+        if user is not None:
+            # 인증 성공 시 토큰 생성
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key}, status=200)
+        else:
+            return Response(status=400, data=dict(message="입력하신 아이디가 존재하지 않거나 패스워드가 일치하지 않습니다."))
 
 # 로그아웃 세션삭제
 class Logout(APIView):
     def post(self,request):
-        request.session.flush()
-        #return render(request,"user/login.html")
+        token = Token.objects.get(user=request.user)
+        token.delete()
         return Response({'message': '로그아웃되었습니다.'}, status=200)
 
 
@@ -105,10 +124,15 @@ class ResetPassword(APIView):
 
 #유저 프로필 정보(닉네임, 이메일, 분야별 점수들)
 class UserProfileView(APIView):
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
+        
+        #밑에2줄 확인용임 이따 지워
+        session_key = request.session.session_key
+        print("Session Key:", session_key, user)
 
         # 사용자의 프로필 정보 및 점수 정보를 가져오는 로직
         user_profile_serializer = UserProfileSerializer(user)
@@ -121,3 +145,4 @@ class UserProfileView(APIView):
         }
 
         return Response(profile_data, status=200)
+        #return render(request, 'problem/main.html', context=profile_data)

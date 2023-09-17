@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'ranking',
     'rest_framework',
     'corsheaders',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -155,3 +156,11 @@ EMAIL_HOST_USER = 'capturethekite@gmail.com'
 EMAIL_HOST_PASSWORD = 'ownrbjdgrwaarevy'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+
+

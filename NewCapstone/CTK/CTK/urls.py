@@ -44,6 +44,7 @@ urlpatterns = [
     
     #랭킹관련
     path('api/ranking/<str:category>/', RankingView.as_view(), name='api-ranking'), #분야별 랭킹
+
 ]
 
 

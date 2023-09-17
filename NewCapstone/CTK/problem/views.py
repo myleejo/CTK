@@ -9,7 +9,7 @@ from .models import Problem
 from user.models import *
 from ranking.models import *
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.authentication import TokenAuthentication
 # Create your views here.
 
 # ProblemViewSet 보여주기 /api
@@ -54,6 +54,7 @@ class ProblemDetailView(generics.RetrieveAPIView):
 # 문제 정답시 점수 추가, 이미 맞힌 정답일시 점수추가X
 class CheckFlagView(APIView):
 
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request, problem_id):
