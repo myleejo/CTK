@@ -12,7 +12,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.forms import SetPasswordForm
 
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model, authenticate, logout
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 from django.contrib import messages
@@ -24,7 +24,6 @@ from rest_framework.authtoken.models import Token
 from ranking.models import UserScore
 
 from .serializers import *
-
 # Create your views here.
 
 #회원가입 닉네임, 이메일, 이름, 비밀번호 입력.(닉네임, 이메일 중복불가)
@@ -87,10 +86,21 @@ class Login(APIView):
 
 # 로그아웃 세션삭제
 class Logout(APIView):
-    def post(self,request):
-        token = Token.objects.get(user=request.user)
-        token.delete()
-        return Response({'message': '로그아웃되었습니다.'}, status=200)
+   
+    # def post(self,request):
+    #     #token = Token.objects.get(user=request.user)
+    #     #token.delete()
+    #     Token.objects.filter(user=request.user).delete()
+    #     return Response({'message': '로그아웃되었습니다.'}, status=200)
+    authentication_classes = [TokenAuthentication]
+
+    def post(self, request):
+        if request.user.is_authenticated:
+            Token.objects.filter(user=request.user).delete()
+            logout(request)  
+            return Response({'message': '로그아웃되었습니다.'}, status=200)
+        else:
+            return Response({'message': '로그인 상태가 아닙니다.'}, status=400)
 
 
 # 비밀번호 분실 시 이메일을 통한 비밀번호 재설정 가능. 비밀번호 변경 템플릿, 변경 후 로그인페이지로 리다이렉팅 필요
@@ -130,9 +140,6 @@ class UserProfileView(APIView):
     def get(self, request):
         user = request.user
         
-        #밑에2줄 확인용임 이따 지워
-        session_key = request.session.session_key
-        print("Session Key:", session_key, user)
 
         # 사용자의 프로필 정보 및 점수 정보를 가져오는 로직
         user_profile_serializer = UserProfileSerializer(user)

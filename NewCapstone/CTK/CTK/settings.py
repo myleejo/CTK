@@ -139,7 +139,11 @@ CORS_ORIGIN_ALLOW_ALL = False
 # 허용할 도메인 목록
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',  # React 애플리케이션의 도메인
+    'http://localhost:8000',  #10-11 추가
 ]
+
+CORS_ALLOW_CREDENTIALS = True #10-11 로그인 비밀번호 오류 추가.
+
 
 AUTH_USER_MODEL = 'user.User'
 
