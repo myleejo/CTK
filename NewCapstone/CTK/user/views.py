@@ -83,6 +83,32 @@ class Login(APIView):
             return Response({'token': token.key}, status=200)
         else:
             return Response(status=400, data=dict(message="입력하신 아이디가 존재하지 않거나 패스워드가 일치하지 않습니다."))
+        
+# #토큰 기한 추가
+# from django.utils import timezone
+
+# class Login(APIView):
+#     def post(self, request):
+#         email = request.data.get('email', None)
+#         password = request.data.get('password', None)
+        
+#         user = authenticate(request, username=email, password=password)
+
+#         if user is not None:
+#             # 인증 성공 시 토큰 생성
+#             token, created = Token.objects.get_or_create(user=user)
+
+#             # 만료 시간 설정
+#             current_time = timezone.now()
+#             expire_time = current_time + timezone.timedelta(seconds=60)  # 60초 테스트
+#             token.created = current_time
+#             token.expire_date = expire_time
+#             token.save()
+
+#             return Response({'token': token.key}, status=200)
+#         else:
+#             return Response(status=400, data=dict(message="입력하신 아이디가 존재하지 않거나 패스워드가 일치하지 않습니다."))
+        
 
 # 로그아웃 세션삭제
 class Logout(APIView):
@@ -92,6 +118,7 @@ class Logout(APIView):
     #     #token.delete()
     #     Token.objects.filter(user=request.user).delete()
     #     return Response({'message': '로그아웃되었습니다.'}, status=200)
+
     authentication_classes = [TokenAuthentication]
 
     def post(self, request):
@@ -129,7 +156,32 @@ class ResetPassword(APIView):
         else:
             messages.error(request, '해당 이메일을 사용하는 계정을 찾을 수 없습니다.')
 
-        return Response({'message': '이메일이 전송되었습니다.'})
+        return Response({'message': '이메일이 전송되었습니다.','reset_link': reset_link})
+    
+
+from rest_framework import status
+
+class ResetPasswordConfirm(APIView):
+    def post(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_user_model().objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+            user = None
+
+        if user and default_token_generator.check_token(user, token):
+            new_password = request.data.get('new_password')
+            confirm_new_password = request.data.get('confirm_new_password')
+
+            if new_password == confirm_new_password:
+                # 비밀번호 변경 폼 데이터 받아서 처리
+                user.set_password(new_password)
+                user.save()
+                return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': '비밀번호 확인이 일치하지 않습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message': '유효하지 않은 요청입니다.'}, status=status.HTTP_400_BAD_REQUEST)
     
 
 #유저 프로필 정보(닉네임, 이메일, 분야별 점수들)

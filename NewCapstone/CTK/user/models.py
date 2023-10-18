@@ -40,3 +40,14 @@ class User(AbstractUser):
     def __str__(self):
         return self.email 
     objects = CustomUserManager()
+
+
+
+# from django.db import models
+# from user.models import User
+
+# class CustomToken(models.Model):
+#     key = models.CharField(max_length=40, primary_key=True)
+#     user = models.ForeignKey(User, related_name='custom_tokens', on_delete=models.CASCADE)
+#     created = models.DateTimeField(auto_now_add=True)
+#     expire_date = models.DateTimeField()
